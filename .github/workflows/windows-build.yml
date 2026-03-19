@@ -33,7 +33,30 @@ jobs:
         run: flutter pub get
 
       - name: Build Windows EXE
-        run: flutter build windows --release
+        shell: pwsh
+        run: |
+          $retryCount = 0
+          $success = $false
+          while (-not $success -and $retryCount -lt 3) {
+            Write-Host "Attempting build... ($($retryCount + 1)/3)"
+            try {
+              $process = Start-Process flutter -ArgumentList "build","windows","--release" -Wait -NoNewWindow -PassThru
+              if ($process.ExitCode -eq 0) {
+                $success = $true
+                Write-Host "Build succeeded!"
+              } else {
+                throw "Build failed with exit code $($process.ExitCode)"
+              }
+            } catch {
+              Write-Host "Build failed. Waiting 5 seconds before retrying..."
+              Start-Sleep -Seconds 5
+              $retryCount++
+            }
+          }
+          if (-not $success) {
+            Write-Error "Failed to build after 3 attempts."
+            exit 1
+          }
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
