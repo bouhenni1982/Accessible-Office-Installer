@@ -23,6 +23,9 @@ jobs:
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
 
+      - name: Exclude from Windows Defender (Fix for mt.exe error)
+        run: Add-MpPreference -ExclusionPath "${{ github.workspace }}"
+
       - name: Clean project
         run: flutter clean
 

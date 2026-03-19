@@ -1,0 +1,33 @@
+
+D:\flutterProjects\Accessible-Office-Installer>git status 
+On branch main
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	push.bat
+	push_output.txt
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+D:\flutterProjects\Accessible-Office-Installer>git add . 
+warning: in the working copy of 'push.bat', LF will be replaced by CRLF the next time Git touches it
+
+D:\flutterProjects\Accessible-Office-Installer>git commit -m "Fix errors and setup Windows CI Workflow" 
+[main ac0f6ee] Fix errors and setup Windows CI Workflow
+ 2 files changed, 6 insertions(+)
+ create mode 100644 push.bat
+ create mode 100644 push_output.txt
+
+D:\flutterProjects\Accessible-Office-Installer>git branch -M main 
+
+D:\flutterProjects\Accessible-Office-Installer>git remote add origin https://github.com/bouhenni1982/Accessible-Office-Installer.git 
+error: remote origin already exists.
+
+D:\flutterProjects\Accessible-Office-Installer>git push -u origin main 
+To https://github.com/bouhenni1982/Accessible-Office-Installer.git
+ ! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'https://github.com/bouhenni1982/Accessible-Office-Installer.git'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing to
+hint: the same ref. If you want to integrate the remote changes, use
+hint: 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
