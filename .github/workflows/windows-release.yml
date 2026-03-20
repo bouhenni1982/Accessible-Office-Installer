@@ -1,0 +1,76 @@
+name: Release Windows EXE
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Clean project
+        run: flutter clean
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze project
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build Windows EXE
+        run: flutter build windows --release
+
+      - name: Package release files
+        shell: pwsh
+        run: |
+          $releaseDir = "build/windows/x64/runner/Release"
+          $assetName = "accessible-office-installer-windows.zip"
+          if (-not (Test-Path $releaseDir)) {
+            throw "Release directory not found: $releaseDir"
+          }
+          if (Test-Path $assetName) {
+            Remove-Item $assetName -Force
+          }
+          Compress-Archive -Path "$releaseDir/*" -DestinationPath $assetName
+
+      - name: Determine release tag
+        id: release_tag
+        shell: pwsh
+        run: |
+          if ("${{ github.ref_type }}" -eq "tag") {
+            "tag=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
+          } else {
+            "tag=manual-${{ github.run_number }}" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: Windows Release ${{ steps.release_tag.outputs.tag }}
+          generate_release_notes: true
+          prerelease: ${{ github.ref_type != 'tag' }}
+          files: accessible-office-installer-windows.zip
