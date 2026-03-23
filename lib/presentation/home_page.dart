@@ -37,6 +37,14 @@ class HomePage extends StatelessWidget {
           )
         ],
       ),
+      bottomNavigationBar: Consumer<InstallerState>(
+        builder: (context, state, child) {
+          if (state.isInstalling) {
+            return const SizedBox.shrink();
+          }
+          return _buildInstallActionBar(state);
+        },
+      ),
       body: Consumer<InstallerState>(
         builder: (context, state, child) {
           if (state.isInstalling) {
@@ -90,7 +98,7 @@ class HomePage extends StatelessWidget {
     return FocusTraversalGroup(
       policy: OrderedTraversalPolicy(),
       child: ListView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 120.0),
         children: [
           Text('Office Configuration', style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 24),
@@ -188,23 +196,47 @@ class HomePage extends StatelessWidget {
             _buildInstallationSummary(state),
             const SizedBox(height: 24),
           ],
-          Semantics(
-            button: true,
-            label: 'Start Office Installation. This will require Administrator privileges.',
-            child: ElevatedButton.icon(
-              onPressed: state.isInstalling ? null : () => state.startInstallation(),
-              icon: const Icon(Icons.download),
-              label: const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('Install Office', style: TextStyle(fontSize: 18)),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInstallActionBar(InstallerState state) {
+    return SafeArea(
+      top: false,
+      child: Material(
+        elevation: 12,
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'After choosing the required options, activate the button below to start installation.',
+              ),
+              const SizedBox(height: 12),
+              Semantics(
+                button: true,
+                label: 'Install Office now. This button starts the selected Office installation and requires administrator privileges.',
+                hint: 'Activates the Office installation using the selected options.',
+                child: ElevatedButton.icon(
+                  onPressed: () => state.startInstallation(),
+                  icon: const Icon(Icons.download),
+                  label: const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('Install Office', style: TextStyle(fontSize: 18)),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
