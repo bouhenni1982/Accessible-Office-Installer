@@ -22,12 +22,68 @@ class OfficeConfig {
   });
 }
 
+class OfficeEdition {
+  final String id;
+  final String name;
+  final List<String> supportedChannels;
+
+  const OfficeEdition(this.id, this.name, this.supportedChannels);
+}
+
+class OfficeChannel {
+  final String id;
+  final String name;
+
+  const OfficeChannel(this.id, this.name);
+}
+
 class OfficeApp {
   final String id;
   final String name;
 
   const OfficeApp(this.id, this.name);
 }
+
+const List<OfficeChannel> availableChannels = [
+  OfficeChannel('Current', 'Current Channel'),
+  OfficeChannel('Broad', 'Semi-Annual Enterprise Channel'),
+  OfficeChannel('MonthlyEnterprise', 'Monthly Enterprise Channel'),
+  OfficeChannel('PerpetualVL2021', 'Office LTSC 2021 Perpetual Enterprise'),
+  OfficeChannel('PerpetualVL2024', 'Office LTSC 2024 Perpetual Enterprise'),
+];
+
+const List<OfficeEdition> availableEditions = [
+  OfficeEdition(
+    'O365ProPlusRetail',
+    'Microsoft 365 Apps for Enterprise',
+    ['Current', 'Broad', 'MonthlyEnterprise'],
+  ),
+  OfficeEdition(
+    'O365BusinessRetail',
+    'Microsoft 365 Apps for Business',
+    ['Current', 'Broad', 'MonthlyEnterprise'],
+  ),
+  OfficeEdition(
+    'ProPlus2021Volume',
+    'Office LTSC Professional Plus 2021',
+    ['PerpetualVL2021'],
+  ),
+  OfficeEdition(
+    'ProPlus2024Volume',
+    'Office LTSC Professional Plus 2024',
+    ['PerpetualVL2024'],
+  ),
+  OfficeEdition(
+    'Standard2024Volume',
+    'Office LTSC Standard 2024',
+    ['PerpetualVL2024'],
+  ),
+  OfficeEdition(
+    'Home2024Retail',
+    'Office Home 2024',
+    ['Current', 'Broad', 'MonthlyEnterprise'],
+  ),
+];
 
 const List<OfficeApp> availableApps = [
   OfficeApp('Access', 'Access'),

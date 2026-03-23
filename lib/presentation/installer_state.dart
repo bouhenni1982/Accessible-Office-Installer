@@ -17,6 +17,7 @@ class InstallerState extends ChangeNotifier {
   bool _isInstalling = false;
   String _installStatus = 'Ready to install';
   String _logs = '';
+  bool _lastOperationFailed = false;
   
   bool _isOfficeInstalled = false;
 
@@ -36,15 +37,27 @@ class InstallerState extends ChangeNotifier {
   String get installStatus => _installStatus;
   String get logs => _logs;
   bool get isOfficeInstalled => _isOfficeInstalled;
+  bool get hasInstallationActivity => _logs.trim().isNotEmpty || _installStatus != 'Ready to install';
+  bool get lastOperationFailed => _lastOperationFailed;
+  List<OfficeChannel> get availableChannelsForSelectedEdition {
+    final allowedChannels = _supportedChannelsForEdition(_edition);
+    return availableChannels.where((channel) => allowedChannels.contains(channel.id)).toList();
+  }
 
   void updateEdition(String value) {
     _edition = value;
-    _channel = _resolveChannelForEdition();
+    _channel = _resolveChannelForEdition(edition: value, currentChannel: _channel);
     notifyListeners();
   }
   void updateArchitecture(String value) { _architecture = value; notifyListeners(); }
   void updateLanguage(String value) { _language = value; notifyListeners(); }
-  void updateChannel(String value) { _channel = value; notifyListeners(); }
+  void updateChannel(String value) {
+    final allowedChannels = _supportedChannelsForEdition(_edition);
+    if (allowedChannels.contains(value)) {
+      _channel = value;
+      notifyListeners();
+    }
+  }
   void updateAcceptEula(bool value) { _acceptEula = value; notifyListeners(); }
   void updateDisplayLevel(String value) { _displayLevel = value; notifyListeners(); }
   
@@ -67,26 +80,40 @@ class InstallerState extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _resolveChannelForEdition() {
-    if (_edition == 'ProPlus2021Volume') {
-      return 'PerpetualVL2021';
+  List<String> _supportedChannelsForEdition(String edition) {
+    for (final item in availableEditions) {
+      if (item.id == edition) {
+        return item.supportedChannels;
+      }
     }
-    if (_channel == 'PerpetualVL2021') {
-      return 'Current';
+
+    return const ['Current', 'Broad', 'MonthlyEnterprise'];
+  }
+
+  String _resolveChannelForEdition({String? edition, String? currentChannel}) {
+    final selectedEdition = edition ?? _edition;
+    final selectedChannel = currentChannel ?? _channel;
+    final allowedChannels = _supportedChannelsForEdition(selectedEdition);
+
+    if (allowedChannels.contains(selectedChannel)) {
+      return selectedChannel;
     }
-    return _channel;
+
+    return allowedChannels.first;
   }
 
   Future<void> startInstallation() async {
     _isInstalling = true;
     _installStatus = 'Preparing installation...';
     _logs = '';
+    _lastOperationFailed = false;
     notifyListeners();
 
     try {
       final effectiveChannel = _resolveChannelForEdition();
       if (effectiveChannel != _channel) {
         appendLog('Adjusted update channel from $_channel to $effectiveChannel for the selected Office edition.');
+        _channel = effectiveChannel;
       }
 
       final config = OfficeConfig(
@@ -120,9 +147,11 @@ class InstallerState extends ChangeNotifier {
         _installStatus = 'Installation completed successfully.';
       } else {
         _installStatus = 'Installation failed with exit code $exitCode.';
+        _lastOperationFailed = true;
       }
     } catch (e) {
       _installStatus = 'Error occurred during installation.';
+      _lastOperationFailed = true;
       appendLog(e.toString());
     } finally {
       _isInstalling = false;

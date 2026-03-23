@@ -85,6 +85,8 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildConfigurationForm(BuildContext context, InstallerState state) {
+    final channelItems = state.availableChannelsForSelectedEdition;
+
     return FocusTraversalGroup(
       policy: OrderedTraversalPolicy(),
       child: ListView(
@@ -96,11 +98,9 @@ class HomePage extends StatelessWidget {
           _buildDropdown<String>(
             label: 'Edition',
             value: state.edition,
-            items: const [
-              DropdownMenuItem(value: 'O365ProPlusRetail', child: Text('Microsoft 365 Apps for Enterprise')),
-              DropdownMenuItem(value: 'O365BusinessRetail', child: Text('Microsoft 365 Apps for Business')),
-              DropdownMenuItem(value: 'ProPlus2021Volume', child: Text('Office LTSC Professional Plus 2021')),
-            ],
+            items: availableEditions
+                .map((edition) => DropdownMenuItem(value: edition.id, child: Text(edition.name)))
+                .toList(),
             onChanged: (val) => state.updateEdition(val!),
             tooltip: 'Select the Office Edition to install.',
           ),
@@ -133,12 +133,9 @@ class HomePage extends StatelessWidget {
           _buildDropdown<String>(
             label: 'Update Channel',
             value: state.channel,
-            items: const [
-              DropdownMenuItem(value: 'Current', child: Text('Current Channel')),
-              DropdownMenuItem(value: 'Broad', child: Text('Semi-Annual Enterprise Channel')),
-              DropdownMenuItem(value: 'MonthlyEnterprise', child: Text('Monthly Enterprise Channel')),
-              DropdownMenuItem(value: 'PerpetualVL2021', child: Text('Office LTSC 2021 Perpetual Enterprise')),
-            ],
+            items: channelItems
+                .map((channel) => DropdownMenuItem(value: channel.id, child: Text(channel.name)))
+                .toList(),
             onChanged: (val) => state.updateChannel(val!),
             tooltip: 'Select the update channel for Office.',
           ),
@@ -177,11 +174,15 @@ class HomePage extends StatelessWidget {
           ),
           
           const SizedBox(height: 32),
+          if (state.hasInstallationActivity) ...[
+            _buildInstallationSummary(state),
+            const SizedBox(height: 24),
+          ],
           Semantics(
             button: true,
             label: 'Start Office Installation. This will require Administrator privileges.',
             child: ElevatedButton.icon(
-              onPressed: () => state.startInstallation(),
+              onPressed: state.isInstalling ? null : () => state.startInstallation(),
               icon: const Icon(Icons.download),
               label: const Padding(
                 padding: EdgeInsets.all(16.0),
@@ -193,6 +194,47 @@ class HomePage extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInstallationSummary(InstallerState state) {
+    final summaryColor = state.lastOperationFailed ? Colors.red : Colors.blue;
+
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: summaryColor.withOpacity(0.08),
+        border: Border.all(color: summaryColor.withOpacity(0.35)),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            state.lastOperationFailed ? 'Last Installation Error' : 'Last Installation Status',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: summaryColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(state.installStatus),
+          if (state.logs.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text('Logs:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12.0),
+              color: Colors.black87,
+              child: SelectableText(
+                state.logs,
+                style: const TextStyle(color: Colors.greenAccent, fontFamily: 'Consolas'),
+              ),
+            ),
+          ],
         ],
       ),
     );
