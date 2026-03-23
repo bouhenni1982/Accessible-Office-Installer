@@ -25,6 +25,9 @@ class XmlGenerator {
         'AcceptEULA': config.acceptEula ? 'TRUE' : 'FALSE',
       });
 
+      // Remove legacy MSI-based Office installs that commonly block Click-to-Run.
+      builder.element('RemoveMSI');
+
       if (config.autoActivate) {
         builder.element('Property', attributes: {
           'Name': 'AUTOACTIVATE',

@@ -37,7 +37,11 @@ class InstallerState extends ChangeNotifier {
   String get logs => _logs;
   bool get isOfficeInstalled => _isOfficeInstalled;
 
-  void updateEdition(String value) { _edition = value; notifyListeners(); }
+  void updateEdition(String value) {
+    _edition = value;
+    _channel = _resolveChannelForEdition();
+    notifyListeners();
+  }
   void updateArchitecture(String value) { _architecture = value; notifyListeners(); }
   void updateLanguage(String value) { _language = value; notifyListeners(); }
   void updateChannel(String value) { _channel = value; notifyListeners(); }
@@ -63,6 +67,16 @@ class InstallerState extends ChangeNotifier {
     notifyListeners();
   }
 
+  String _resolveChannelForEdition() {
+    if (_edition == 'ProPlus2021Volume') {
+      return 'PerpetualVL2021';
+    }
+    if (_channel == 'PerpetualVL2021') {
+      return 'Current';
+    }
+    return _channel;
+  }
+
   Future<void> startInstallation() async {
     _isInstalling = true;
     _installStatus = 'Preparing installation...';
@@ -70,11 +84,16 @@ class InstallerState extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final effectiveChannel = _resolveChannelForEdition();
+      if (effectiveChannel != _channel) {
+        appendLog('Adjusted update channel from $_channel to $effectiveChannel for the selected Office edition.');
+      }
+
       final config = OfficeConfig(
         edition: _edition,
         architecture: _architecture,
         language: _language,
-        channel: _channel,
+        channel: effectiveChannel,
         acceptEula: _acceptEula,
         displayLevel: _displayLevel,
         excludeApps: _excludeApps.toList(),
@@ -87,7 +106,7 @@ class InstallerState extends ChangeNotifier {
       _installStatus = 'Downloading Office Deployment Tool...';
       notifyListeners();
       
-      final setupPath = await OdtDownloader.downloadAndExtract();
+      final setupPath = await OdtDownloader.downloadAndExtract(onProgress: appendLog);
       appendLog('ODT extracted to: $setupPath');
 
       _installStatus = 'Running installation...';

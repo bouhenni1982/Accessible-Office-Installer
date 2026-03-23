@@ -15,6 +15,12 @@ class CommandRunnerService {
     final configPath = path.join(odtDir.path, 'configuration.xml');
     final configFile = File(configPath);
     await configFile.writeAsString(configurationXmlContent);
+    if (!await File(setupExePath).exists()) {
+      throw Exception('setup.exe not found at: $setupExePath');
+    }
+
+    onProgress('Using setup.exe: $setupExePath');
+    onProgress('Using configuration: $configPath');
 
     onProgress('Running setup.exe /configure...');
     
@@ -34,6 +40,7 @@ class CommandRunnerService {
     });
 
     final exitCode = await process.exitCode;
+    onProgress('setup.exe finished with exit code $exitCode');
     return exitCode;
   }
 }
