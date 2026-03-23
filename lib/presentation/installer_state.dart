@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import '../domain/models.dart';
 import '../data/xml_generator.dart';
 import '../data/odt_downloader.dart';
 import '../data/command_runner.dart';
 import '../data/registry_checker.dart';
+import '../l10n/app_localizations.dart';
 
 class InstallerState extends ChangeNotifier {
   String _edition = 'O365ProPlusRetail';
@@ -13,15 +15,19 @@ class InstallerState extends ChangeNotifier {
   bool _acceptEula = true;
   String _displayLevel = 'None';
   final Set<String> _excludeApps = {};
+  Locale _appLocale = AppLocalizations.resolveDeviceLocale(
+    WidgetsBinding.instance.platformDispatcher.locales,
+  );
 
   bool _isInstalling = false;
-  String _installStatus = 'Ready to install';
+  String _installStatus = '';
   String _logs = '';
   bool _lastOperationFailed = false;
   
   bool _isOfficeInstalled = false;
 
   InstallerState() {
+    _installStatus = _tr('readyToInstall');
     _checkRegistry();
   }
 
@@ -32,12 +38,13 @@ class InstallerState extends ChangeNotifier {
   bool get acceptEula => _acceptEula;
   String get displayLevel => _displayLevel;
   Set<String> get excludeApps => _excludeApps;
+  Locale get appLocale => _appLocale;
 
   bool get isInstalling => _isInstalling;
   String get installStatus => _installStatus;
   String get logs => _logs;
   bool get isOfficeInstalled => _isOfficeInstalled;
-  bool get hasInstallationActivity => _logs.trim().isNotEmpty || _installStatus != 'Ready to install';
+  bool get hasInstallationActivity => _logs.trim().isNotEmpty || _installStatus.trim().isNotEmpty;
   bool get lastOperationFailed => _lastOperationFailed;
   List<OfficeChannel> get availableChannelsForSelectedEdition {
     final allowedChannels = _supportedChannelsForEdition(_edition);
@@ -51,6 +58,13 @@ class InstallerState extends ChangeNotifier {
   }
   void updateArchitecture(String value) { _architecture = value; notifyListeners(); }
   void updateLanguage(String value) { _language = value; notifyListeners(); }
+  void updateAppLocale(Locale value) {
+    _appLocale = value;
+    if (!_isInstalling && _logs.trim().isEmpty) {
+      _installStatus = _tr('readyToInstall');
+    }
+    notifyListeners();
+  }
   void updateChannel(String value) {
     final allowedChannels = _supportedChannelsForEdition(_edition);
     if (allowedChannels.contains(value)) {
@@ -80,6 +94,10 @@ class InstallerState extends ChangeNotifier {
     notifyListeners();
   }
 
+  String _tr(String key, {Map<String, String> params = const {}}) {
+    return AppLocalizations(_appLocale).text(key, params: params);
+  }
+
   List<String> _supportedChannelsForEdition(String edition) {
     for (final item in availableEditions) {
       if (item.id == edition) {
@@ -104,7 +122,7 @@ class InstallerState extends ChangeNotifier {
 
   Future<void> startInstallation() async {
     _isInstalling = true;
-    _installStatus = 'Preparing installation...';
+    _installStatus = _tr('preparingInstallation');
     _logs = '';
     _lastOperationFailed = false;
     notifyListeners();
@@ -112,7 +130,15 @@ class InstallerState extends ChangeNotifier {
     try {
       final effectiveChannel = _resolveChannelForEdition();
       if (effectiveChannel != _channel) {
-        appendLog('Adjusted update channel from $_channel to $effectiveChannel for the selected Office edition.');
+        appendLog(
+          _tr(
+            'adjustedChannel',
+            params: {
+              'from': _channel,
+              'to': effectiveChannel,
+            },
+          ),
+        );
         _channel = effectiveChannel;
       }
 
@@ -127,16 +153,16 @@ class InstallerState extends ChangeNotifier {
       );
 
       final xmlContent = XmlGenerator.generate(config);
-      appendLog('Generated configuration.xml');
+      appendLog(_tr('generatedConfiguration'));
       appendLog(xmlContent);
 
-      _installStatus = 'Downloading Office Deployment Tool...';
+      _installStatus = _tr('downloadingOdt');
       notifyListeners();
       
       final setupPath = await OdtDownloader.downloadAndExtract(onProgress: appendLog);
-      appendLog('ODT extracted to: $setupPath');
+      appendLog(_tr('odtExtracted', params: {'path': setupPath}));
 
-      _installStatus = 'Running installation...';
+      _installStatus = _tr('runningInstallation');
       notifyListeners();
 
       final exitCode = await CommandRunnerService.installOffice(setupPath, xmlContent, (logData) {
@@ -144,13 +170,13 @@ class InstallerState extends ChangeNotifier {
       });
 
       if (exitCode == 0) {
-        _installStatus = 'Installation completed successfully.';
+        _installStatus = _tr('installationCompleted');
       } else {
-        _installStatus = 'Installation failed with exit code $exitCode.';
+        _installStatus = _tr('installationFailed', params: {'code': '$exitCode'});
         _lastOperationFailed = true;
       }
     } catch (e) {
-      _installStatus = 'Error occurred during installation.';
+      _installStatus = _tr('installationError');
       _lastOperationFailed = true;
       appendLog(e.toString());
     } finally {

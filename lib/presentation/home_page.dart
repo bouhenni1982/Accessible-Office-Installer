@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../domain/models.dart';
+import '../l10n/app_localizations.dart';
 import 'installer_state.dart';
 
 class HomePage extends StatelessWidget {
@@ -8,26 +9,42 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Accessible Office Installer'),
+        title: Text(l10n.text('appTitle')),
         actions: [
+          Consumer<InstallerState>(
+            builder: (context, state, child) {
+              return Padding(
+                padding: const EdgeInsetsDirectional.only(end: 12.0),
+                child: _buildLanguageSelector(state, l10n),
+              );
+            },
+          ),
           Consumer<InstallerState>(
             builder: (context, state, child) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Center(
                   child: Semantics(
-                    label: state.isOfficeInstalled 
-                        ? 'Office is already installed on this machine.' 
-                        : 'Office is not installed.',
+                    label: state.isOfficeInstalled
+                        ? l10n.text('officeInstalledSemantics')
+                        : l10n.text('officeNotInstalledSemantics'),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(state.isOfficeInstalled ? Icons.check_circle : Icons.info, 
-                             color: state.isOfficeInstalled ? Colors.green : Colors.orange),
+                        Icon(
+                          state.isOfficeInstalled ? Icons.check_circle : Icons.info,
+                          color: state.isOfficeInstalled ? Colors.green : Colors.orange,
+                        ),
                         const SizedBox(width: 8),
-                        Text(state.isOfficeInstalled ? 'Office Installed' : 'Office Not Found'),
+                        Text(
+                          state.isOfficeInstalled
+                              ? l10n.text('officeInstalled')
+                              : l10n.text('officeNotFound'),
+                        ),
                       ],
                     ),
                   ),
@@ -57,22 +74,24 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildInstallingView(BuildContext context, InstallerState state) {
+    final l10n = AppLocalizations.of(context);
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Installation Progress',
+            l10n.text('installationProgress'),
             style: Theme.of(context).textTheme.headlineSmall,
-            semanticsLabel: 'Installation in progress.',
+            semanticsLabel: l10n.text('installationInProgressSemantics'),
           ),
           const SizedBox(height: 16),
           const LinearProgressIndicator(),
           const SizedBox(height: 16),
           Text(state.installStatus, style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 24),
-          const Text('Installation Logs:'),
+          Text(l10n.text('installationLogs')),
           const SizedBox(height: 8),
           Expanded(
             child: Container(
@@ -82,7 +101,7 @@ class HomePage extends StatelessWidget {
                 child: Text(
                   state.logs,
                   style: const TextStyle(color: Colors.greenAccent, fontFamily: 'Consolas'),
-                  semanticsLabel: 'Log output: ${state.logs}',
+                  semanticsLabel: '${l10n.text('logOutputSemantics')}: ${state.logs}',
                 ),
               ),
             ),
@@ -93,6 +112,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildConfigurationForm(BuildContext context, InstallerState state) {
+    final l10n = AppLocalizations.of(context);
     final channelItems = state.availableChannelsForSelectedEdition;
 
     return FocusTraversalGroup(
@@ -100,11 +120,11 @@ class HomePage extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 120.0),
         children: [
-          Text('Office Configuration', style: Theme.of(context).textTheme.headlineMedium),
+          Text(l10n.text('officeConfiguration'), style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 24),
           
           _buildDropdown<String>(
-            label: 'Edition',
+            label: l10n.text('edition'),
             value: state.edition,
             items: availableEditions
                 .map(
@@ -115,22 +135,22 @@ class HomePage extends StatelessWidget {
                 )
                 .toList(),
             onChanged: (val) => state.updateEdition(val!),
-            tooltip: 'Select the Office Edition to install.',
+            tooltip: l10n.text('editionTooltip'),
           ),
           
           _buildDropdown<String>(
-            label: 'Architecture',
+            label: l10n.text('architecture'),
             value: state.architecture,
             items: const [
               DropdownMenuItem(value: '64', child: Text('64-bit')),
               DropdownMenuItem(value: '32', child: Text('32-bit')),
             ],
             onChanged: (val) => state.updateArchitecture(val!),
-            tooltip: 'Select the system architecture.',
+            tooltip: l10n.text('architectureTooltip'),
           ),
           
           _buildDropdown<String>(
-            label: 'Language',
+            label: l10n.text('language'),
             value: state.language,
             items: const [
               DropdownMenuItem(value: 'en-us', child: Text('English (US)')),
@@ -140,11 +160,11 @@ class HomePage extends StatelessWidget {
               DropdownMenuItem(value: 'de-de', child: Text('German (Germany)')),
             ],
             onChanged: (val) => state.updateLanguage(val!),
-            tooltip: 'Select the primary installation language.',
+            tooltip: l10n.text('languageTooltip'),
           ),
 
           _buildDropdown<String>(
-            label: 'Update Channel',
+            label: l10n.text('updateChannel'),
             value: state.channel,
             items: channelItems
                 .map(
@@ -155,25 +175,25 @@ class HomePage extends StatelessWidget {
                 )
                 .toList(),
             onChanged: (val) => state.updateChannel(val!),
-            tooltip: 'Select the update channel for Office.',
+            tooltip: l10n.text('updateChannelTooltip'),
           ),
           
           _buildDropdown<String>(
-            label: 'Installation Interface Level (Display Level)',
+            label: l10n.text('displayLevel'),
             value: state.displayLevel,
             items: const [
               DropdownMenuItem(value: 'None', child: Text('None (Silent/Accessibility Mode)')),
               DropdownMenuItem(value: 'Full', child: Text('Full (Show Office Installer UI)')),
             ],
             onChanged: (val) => state.updateDisplayLevel(val!),
-            tooltip: 'Select whether the Microsoft Office Installer UI should be shown or hidden.',
+            tooltip: l10n.text('displayLevelTooltip'),
           ),
           
           const SizedBox(height: 24),
-          const Text('Exclude Applications:', style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(l10n.text('excludeApplications'), style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Semantics(
-            label: 'Application exclusion list. Check an app to exclude it from installation.',
+            label: l10n.text('excludeApplicationsTooltip'),
             child: Wrap(
               spacing: 16.0,
               runSpacing: 8.0,
@@ -183,7 +203,9 @@ class HomePage extends StatelessWidget {
                   label: Text(app.name),
                   selected: isExcluded,
                   onSelected: (_) => state.toggleAppExclusion(app.id),
-                  tooltip: isExcluded ? 'Include ${app.name}' : 'Exclude ${app.name}',
+                  tooltip: isExcluded
+                      ? l10n.text('includeApp', params: {'app': app.name})
+                      : l10n.text('excludeApp', params: {'app': app.name}),
                   selectedColor: Colors.red[100],
                   checkmarkColor: Colors.red,
                 );
@@ -202,6 +224,11 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildInstallActionBar(InstallerState state) {
+    final l10n = AppLocalizations(AppLocalizations.supportedLocales.firstWhere(
+      (locale) => locale.languageCode == state.appLocale.languageCode,
+      orElse: () => const Locale('en'),
+    ));
+
     return SafeArea(
       top: false,
       child: Material(
@@ -213,20 +240,20 @@ class HomePage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'After choosing the required options, activate the button below to start installation.',
+              Text(
+                l10n.text('installActionHelp'),
               ),
               const SizedBox(height: 12),
               Semantics(
                 button: true,
-                label: 'Install Office now. This button starts the selected Office installation and requires administrator privileges.',
-                hint: 'Activates the Office installation using the selected options.',
+                label: l10n.text('installButtonSemantics'),
+                hint: l10n.text('installButtonHint'),
                 child: ElevatedButton.icon(
                   onPressed: () => state.startInstallation(),
                   icon: const Icon(Icons.download),
-                  label: const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text('Install Office', style: TextStyle(fontSize: 18)),
+                  label: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(l10n.text('installButton'), style: const TextStyle(fontSize: 18)),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueAccent,
@@ -242,6 +269,10 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildInstallationSummary(InstallerState state) {
+    final l10n = AppLocalizations(AppLocalizations.supportedLocales.firstWhere(
+      (locale) => locale.languageCode == state.appLocale.languageCode,
+      orElse: () => const Locale('en'),
+    ));
     final summaryColor = state.lastOperationFailed ? Colors.red : Colors.blue;
 
     return Container(
@@ -255,7 +286,9 @@ class HomePage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            state.lastOperationFailed ? 'Last Installation Error' : 'Last Installation Status',
+            state.lastOperationFailed
+                ? l10n.text('lastInstallationError')
+                : l10n.text('lastInstallationStatus'),
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: summaryColor,
@@ -265,7 +298,7 @@ class HomePage extends StatelessWidget {
           Text(state.installStatus),
           if (state.logs.trim().isNotEmpty) ...[
             const SizedBox(height: 12),
-            const Text('Logs:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(l10n.text('logs'), style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -278,6 +311,40 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageSelector(
+    InstallerState state,
+    AppLocalizations l10n,
+  ) {
+    return Semantics(
+      label: l10n.text('languageSection'),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: state.appLocale.languageCode,
+          icon: const Icon(Icons.language),
+          onChanged: (value) {
+            if (value != null) {
+              state.updateAppLocale(Locale(value));
+            }
+          },
+          items: [
+            DropdownMenuItem<String>(
+              value: 'ar',
+              child: Text(l10n.text('languageArabic')),
+            ),
+            DropdownMenuItem<String>(
+              value: 'fr',
+              child: Text(l10n.text('languageFrench')),
+            ),
+            DropdownMenuItem<String>(
+              value: 'en',
+              child: Text(l10n.text('languageEnglish')),
+            ),
+          ],
+        ),
       ),
     );
   }
