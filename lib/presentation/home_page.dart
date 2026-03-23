@@ -99,7 +99,12 @@ class HomePage extends StatelessWidget {
             label: 'Edition',
             value: state.edition,
             items: availableEditions
-                .map((edition) => DropdownMenuItem(value: edition.id, child: Text(edition.name)))
+                .map(
+                  (edition) => DropdownMenuItem<String>(
+                    value: edition.id,
+                    child: Text(edition.name),
+                  ),
+                )
                 .toList(),
             onChanged: (val) => state.updateEdition(val!),
             tooltip: 'Select the Office Edition to install.',
@@ -134,7 +139,12 @@ class HomePage extends StatelessWidget {
             label: 'Update Channel',
             value: state.channel,
             items: channelItems
-                .map((channel) => DropdownMenuItem(value: channel.id, child: Text(channel.name)))
+                .map(
+                  (channel) => DropdownMenuItem<String>(
+                    value: channel.id,
+                    child: Text(channel.name),
+                  ),
+                )
                 .toList(),
             onChanged: (val) => state.updateChannel(val!),
             tooltip: 'Select the update channel for Office.',
@@ -205,8 +215,8 @@ class HomePage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: summaryColor.withOpacity(0.08),
-        border: Border.all(color: summaryColor.withOpacity(0.35)),
+        color: summaryColor.withValues(alpha: 0.08),
+        border: Border.all(color: summaryColor.withValues(alpha: 0.35)),
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: Column(
