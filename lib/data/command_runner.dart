@@ -1,24 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
+
+import 'installer_paths.dart';
 
 class CommandRunnerService {
   static Future<int> installOffice(String setupExePath, String configurationXmlContent, Function(String) onProgress) async {
-    final tempDir = await getTemporaryDirectory();
-    final odtDir = Directory(path.join(tempDir.path, 'AccessibleOfficeInstaller', 'ODT'));
-    
-    if (!await odtDir.exists()) {
-      await odtDir.create(recursive: true);
-    }
-
-    final configPath = path.join(odtDir.path, 'configuration.xml');
+    final odtDir = await InstallerPaths.getBaseDirectory();
+    final configPath = await InstallerPaths.getConfigurationXmlPath();
     final configFile = File(configPath);
     await configFile.writeAsString(configurationXmlContent);
     if (!await File(setupExePath).exists()) {
       throw Exception('setup.exe not found at: $setupExePath');
     }
 
+    onProgress('Working directory: ${odtDir.path}');
     onProgress('Using setup.exe: $setupExePath');
     onProgress('Using configuration: $configPath');
 

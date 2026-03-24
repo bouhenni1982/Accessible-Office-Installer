@@ -4,6 +4,7 @@ import '../domain/models.dart';
 import '../data/xml_generator.dart';
 import '../data/odt_downloader.dart';
 import '../data/command_runner.dart';
+import '../data/installer_paths.dart';
 import '../data/registry_checker.dart';
 import '../l10n/app_localizations.dart';
 
@@ -156,10 +157,14 @@ class InstallerState extends ChangeNotifier {
       appendLog(_tr('generatedConfiguration'));
       appendLog(xmlContent);
 
+      final configurationPath = await InstallerPaths.getConfigurationXmlPath();
+      appendLog('configuration.xml path: $configurationPath');
+
       _installStatus = _tr('downloadingOdt');
       notifyListeners();
       
       final setupPath = await OdtDownloader.downloadAndExtract(onProgress: appendLog);
+      appendLog('setup.exe path: $setupPath');
       appendLog(_tr('odtExtracted', params: {'path': setupPath}));
 
       _installStatus = _tr('runningInstallation');
