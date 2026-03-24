@@ -190,24 +190,31 @@ class HomePage extends StatelessWidget {
           ),
           
           const SizedBox(height: 24),
-          Text(l10n.text('excludeApplications'), style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            l10n.text('includeApplications') == 'includeApplications'
+                ? 'Applications to Install:'
+                : l10n.text('includeApplications'),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           Semantics(
-            label: l10n.text('excludeApplicationsTooltip'),
+            label: l10n.text('includeApplicationsTooltip') == 'includeApplicationsTooltip'
+                ? 'Select the applications you want to install. Unselected apps will be excluded.'
+                : l10n.text('includeApplicationsTooltip'),
             child: Wrap(
               spacing: 16.0,
               runSpacing: 8.0,
               children: availableApps.map((app) {
-                final isExcluded = state.excludeApps.contains(app.id);
+                final isIncluded = state.includedApps.contains(app.id);
                 return FilterChip(
                   label: Text(app.name),
-                  selected: isExcluded,
-                  onSelected: (_) => state.toggleAppExclusion(app.id),
-                  tooltip: isExcluded
-                      ? l10n.text('includeApp', params: {'app': app.name})
-                      : l10n.text('excludeApp', params: {'app': app.name}),
-                  selectedColor: Colors.red[100],
-                  checkmarkColor: Colors.red,
+                  selected: isIncluded,
+                  onSelected: (_) => state.toggleAppSelection(app.id),
+                  tooltip: isIncluded
+                      ? l10n.text('excludeApp', params: {'app': app.name})
+                      : l10n.text('includeApp', params: {'app': app.name}),
+                  selectedColor: Colors.green[100],
+                  checkmarkColor: Colors.green,
                 );
               }).toList(),
             ),

@@ -17,7 +17,7 @@ class InstallerState extends ChangeNotifier {
   String _channel = 'Current';
   bool _acceptEula = true;
   String _displayLevel = 'None';
-  final Set<String> _excludeApps = {};
+  final Set<String> _includedApps = availableApps.map((app) => app.id).toSet();
   Locale _appLocale = AppLocalizations.resolveDeviceLocale(
     WidgetsBinding.instance.platformDispatcher.locales,
   );
@@ -40,7 +40,7 @@ class InstallerState extends ChangeNotifier {
   String get channel => _channel;
   bool get acceptEula => _acceptEula;
   String get displayLevel => _displayLevel;
-  Set<String> get excludeApps => _excludeApps;
+  Set<String> get includedApps => _includedApps;
   Locale get appLocale => _appLocale;
 
   bool get isInstalling => _isInstalling;
@@ -78,11 +78,11 @@ class InstallerState extends ChangeNotifier {
   void updateAcceptEula(bool value) { _acceptEula = value; notifyListeners(); }
   void updateDisplayLevel(String value) { _displayLevel = value; notifyListeners(); }
   
-  void toggleAppExclusion(String appId) {
-    if (_excludeApps.contains(appId)) {
-      _excludeApps.remove(appId);
+  void toggleAppSelection(String appId) {
+    if (_includedApps.contains(appId)) {
+      _includedApps.remove(appId);
     } else {
-      _excludeApps.add(appId);
+      _includedApps.add(appId);
     }
     notifyListeners();
   }
@@ -123,6 +123,13 @@ class InstallerState extends ChangeNotifier {
     return allowedChannels.first;
   }
 
+  List<String> _resolveExcludedApps() {
+    return availableApps
+        .where((app) => !_includedApps.contains(app.id))
+        .map((app) => app.id)
+        .toList();
+  }
+
   Future<void> startInstallation() async {
     _isInstalling = true;
     _installStatus = _tr('preparingInstallation');
@@ -152,8 +159,11 @@ class InstallerState extends ChangeNotifier {
         channel: effectiveChannel,
         acceptEula: _acceptEula,
         displayLevel: _displayLevel,
-        excludeApps: _excludeApps.toList(),
+        excludeApps: _resolveExcludedApps(),
       );
+
+      appendLog('Included apps: ${_includedApps.toList()..sort()}');
+      appendLog('Excluded apps: ${config.excludeApps..sort()}');
 
       final xmlContent = XmlGenerator.generate(config);
       appendLog(_tr('generatedConfiguration'));
