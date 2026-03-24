@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import '../domain/models.dart';
@@ -158,7 +160,9 @@ class InstallerState extends ChangeNotifier {
       appendLog(xmlContent);
 
       final configurationPath = await InstallerPaths.getConfigurationXmlPath();
+      await File(configurationPath).writeAsString(xmlContent);
       appendLog('configuration.xml path: $configurationPath');
+      appendLog('configuration.xml saved successfully.');
 
       _installStatus = _tr('downloadingOdt');
       notifyListeners();

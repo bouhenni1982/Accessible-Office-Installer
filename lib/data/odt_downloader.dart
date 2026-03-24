@@ -29,19 +29,18 @@ class OdtDownloader {
       onProgress?.call('Reusing cached ODT setup for package: $resolvedFileName');
     } else {
       final downloadPath = await InstallerPaths.getDownloadedInstallerPath();
+      final downloadFile = File(downloadPath);
 
       onProgress?.call('ODT working directory: ${odtDir.path}');
       onProgress?.call('Downloading ODT from Microsoft...');
       onProgress?.call('Resolved Microsoft ODT package: $resolvedFileName');
       onProgress?.call('Official download URL: $latestDownloadUrl');
 
-      final response = await http.get(Uri.parse(latestDownloadUrl)).timeout(const Duration(minutes: 5));
-      if (response.statusCode != 200) {
-        throw Exception('Failed to download ODT: ${response.statusCode}');
-      }
-
-      final file = File(downloadPath);
-      await file.writeAsBytes(response.bodyBytes);
+      await _downloadInstaller(
+        url: latestDownloadUrl,
+        targetFile: downloadFile,
+        onProgress: onProgress,
+      );
       onProgress?.call('ODT package saved to: $downloadPath');
 
       onProgress?.call('Extracting Office Deployment Tool...');
@@ -53,8 +52,8 @@ class OdtDownloader {
 
       await versionFile.writeAsString(resolvedFileName);
 
-      if (await file.exists()) {
-        await file.delete();
+      if (await downloadFile.exists()) {
+        await downloadFile.delete();
       }
     }
 
@@ -106,5 +105,44 @@ class OdtDownloader {
 
     final cachedVersion = (await versionFile.readAsString()).trim();
     return cachedVersion == resolvedFileName;
+  }
+
+  static Future<void> _downloadInstaller({
+    required String url,
+    required File targetFile,
+    void Function(String)? onProgress,
+  }) async {
+    try {
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(minutes: 5));
+      if (response.statusCode != 200) {
+        throw Exception('HTTP ${response.statusCode}');
+      }
+
+      await targetFile.writeAsBytes(response.bodyBytes);
+      return;
+    } catch (error) {
+      onProgress?.call('HTTP download failed, trying PowerShell fallback: $error');
+    }
+
+    if (!Platform.isWindows) {
+      throw Exception('Failed to download ODT with HTTP and no Windows fallback is available.');
+    }
+
+    final escapedUrl = url.replaceAll("'", "''");
+    final escapedPath = targetFile.path.replaceAll("'", "''");
+    final powershellScript = "\$ProgressPreference = 'SilentlyContinue'; "
+        "Invoke-WebRequest -Uri '$escapedUrl' -OutFile '$escapedPath' -UseBasicParsing";
+
+    final result = await Process.run(
+      'powershell',
+      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', powershellScript],
+      runInShell: true,
+    );
+
+    if (result.exitCode != 0 || !await targetFile.exists()) {
+      throw Exception(
+        'Failed to download ODT with PowerShell fallback: ${result.stderr}\n${result.stdout}',
+      );
+    }
   }
 }
