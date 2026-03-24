@@ -7,8 +7,7 @@ import 'installer_paths.dart';
 
 class OdtDownloader {
   static const String _downloadCenterDetailsUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=49117';
-  static const String _downloadCenterConfirmationUrl = 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=49117';
-  static const String _fallbackOdtDownloadUrl = 'https://download.microsoft.com/download/2/7/A/27AF1BE6-DD20-4CB4-B154-EBAB8A5D4A77/officedeploymenttool_14326-20238.exe';
+  static const String _fallbackOdtDownloadUrl = 'https://download.microsoft.com/download/6c1eeb25-cf8b-41d9-8d0d-cc1dbc032140/officedeploymenttool_19725-20126.exe';
   static final RegExp _officialDownloadUrlPattern = RegExp(
     r'''https://download\.microsoft\.com/[^\s"'<>]+/officedeploymenttool_[^"'<>]+\.exe''',
     caseSensitive: false,
@@ -65,10 +64,7 @@ class OdtDownloader {
   }
 
   static Future<String> _resolveLatestDownloadUrl({void Function(String)? onProgress}) async {
-    final candidatePages = [
-      _downloadCenterConfirmationUrl,
-      _downloadCenterDetailsUrl,
-    ];
+    final candidatePages = [_downloadCenterDetailsUrl];
 
     for (final candidatePage in candidatePages) {
       try {
@@ -81,8 +77,11 @@ class OdtDownloader {
 
         final match = _officialDownloadUrlPattern.firstMatch(response.body);
         if (match != null) {
+          onProgress?.call('Resolved direct Microsoft download URL from details page.');
           return match.group(0)!;
         }
+
+        onProgress?.call('No direct ODT link found in Microsoft details page HTML.');
       } catch (error) {
         onProgress?.call('Could not inspect Microsoft page $candidatePage: $error');
       }
