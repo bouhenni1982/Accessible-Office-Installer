@@ -65,6 +65,26 @@ jobs:
 
           throw "Windows build failed after $attempts attempts."
 
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          $issPath = "installer/accessible_office_installer.iss"
+          $compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $issPath)) {
+            throw "Inno Setup script not found: $issPath"
+          }
+          if (-not (Test-Path $compiler)) {
+            throw "Inno Setup compiler not found: $compiler"
+          }
+          & $compiler $issPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup compilation failed."
+          }
+
       - name: Package release files
         shell: pwsh
         run: |
@@ -77,6 +97,14 @@ jobs:
             Remove-Item $assetName -Force
           }
           Compress-Archive -Path "$releaseDir/*" -DestinationPath $assetName
+
+      - name: Verify installer output
+        shell: pwsh
+        run: |
+          $installerPath = "dist/AccessibleOfficeInstallerSetup.exe"
+          if (-not (Test-Path $installerPath)) {
+            throw "Installer not found: $installerPath"
+          }
 
       - name: Determine release tag
         id: release_tag
@@ -95,4 +123,6 @@ jobs:
           name: Windows Release ${{ steps.release_tag.outputs.tag }}
           generate_release_notes: true
           prerelease: ${{ github.ref_type != 'tag' }}
-          files: accessible-office-installer-windows.zip
+          files: |
+            accessible-office-installer-windows.zip
+            dist/AccessibleOfficeInstallerSetup.exe
