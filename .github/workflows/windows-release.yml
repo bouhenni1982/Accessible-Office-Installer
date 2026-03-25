@@ -43,6 +43,18 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Read app version
+        id: app_version
+        shell: pwsh
+        run: |
+          $versionLine = Select-String -Path "pubspec.yaml" -Pattern '^version:\s*' | Select-Object -First 1
+          if (-not $versionLine) {
+            throw "Could not find version in pubspec.yaml"
+          }
+          $rawVersion = ($versionLine.Line -replace '^version:\s*', '').Trim()
+          $appVersion = ($rawVersion -split '\+')[0]
+          "app_version=$appVersion" >> $env:GITHUB_OUTPUT
+
       - name: Build Windows EXE
         shell: pwsh
         run: |
@@ -74,13 +86,14 @@ jobs:
         run: |
           $issPath = "installer/accessible_office_installer.iss"
           $compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          $outputBaseName = "AccessibleOfficeInstallerSetup-${{ steps.app_version.outputs.app_version }}"
           if (-not (Test-Path $issPath)) {
             throw "Inno Setup script not found: $issPath"
           }
           if (-not (Test-Path $compiler)) {
             throw "Inno Setup compiler not found: $compiler"
           }
-          & $compiler $issPath
+          & $compiler "/DMyAppVersion=${{ steps.app_version.outputs.app_version }}" "/DMyOutputBaseFilename=$outputBaseName" $issPath
           if ($LASTEXITCODE -ne 0) {
             throw "Inno Setup compilation failed."
           }
@@ -89,7 +102,7 @@ jobs:
         shell: pwsh
         run: |
           $releaseDir = "build/windows/x64/runner/Release"
-          $assetName = "accessible-office-installer-windows.zip"
+          $assetName = "accessible-office-installer-windows-${{ steps.app_version.outputs.app_version }}.zip"
           if (-not (Test-Path $releaseDir)) {
             throw "Release directory not found: $releaseDir"
           }
@@ -101,7 +114,7 @@ jobs:
       - name: Verify installer output
         shell: pwsh
         run: |
-          $installerPath = "dist/AccessibleOfficeInstallerSetup.exe"
+          $installerPath = "dist/AccessibleOfficeInstallerSetup-${{ steps.app_version.outputs.app_version }}.exe"
           if (-not (Test-Path $installerPath)) {
             throw "Installer not found: $installerPath"
           }
@@ -124,5 +137,5 @@ jobs:
           generate_release_notes: true
           prerelease: ${{ github.ref_type != 'tag' }}
           files: |
-            accessible-office-installer-windows.zip
-            dist/AccessibleOfficeInstallerSetup.exe
+            accessible-office-installer-windows-${{ steps.app_version.outputs.app_version }}.zip
+            dist/AccessibleOfficeInstallerSetup-${{ steps.app_version.outputs.app_version }}.exe

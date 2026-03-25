@@ -42,6 +42,18 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Read app version
+        id: app_version
+        shell: pwsh
+        run: |
+          $versionLine = Select-String -Path "pubspec.yaml" -Pattern '^version:\s*' | Select-Object -First 1
+          if (-not $versionLine) {
+            throw "Could not find version in pubspec.yaml"
+          }
+          $rawVersion = ($versionLine.Line -replace '^version:\s*', '').Trim()
+          $appVersion = ($rawVersion -split '\+')[0]
+          "app_version=$appVersion" >> $env:GITHUB_OUTPUT
+
       - name: Build Windows EXE
         shell: pwsh
         run: |
@@ -73,13 +85,14 @@ jobs:
         run: |
           $issPath = "installer/accessible_office_installer.iss"
           $compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          $outputBaseName = "AccessibleOfficeInstallerSetup-${{ steps.app_version.outputs.app_version }}"
           if (-not (Test-Path $issPath)) {
             throw "Inno Setup script not found: $issPath"
           }
           if (-not (Test-Path $compiler)) {
             throw "Inno Setup compiler not found: $compiler"
           }
-          & $compiler $issPath
+          & $compiler "/DMyAppVersion=${{ steps.app_version.outputs.app_version }}" "/DMyOutputBaseFilename=$outputBaseName" $issPath
           if ($LASTEXITCODE -ne 0) {
             throw "Inno Setup compilation failed."
           }
@@ -87,11 +100,11 @@ jobs:
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
+          name: windows-build-${{ steps.app_version.outputs.app_version }}
           path: build/windows/x64/runner/Release/
 
       - name: Upload Setup artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-setup
-          path: dist/AccessibleOfficeInstallerSetup.exe
+          name: windows-setup-${{ steps.app_version.outputs.app_version }}
+          path: dist/AccessibleOfficeInstallerSetup-${{ steps.app_version.outputs.app_version }}.exe

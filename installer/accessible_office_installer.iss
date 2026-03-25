@@ -1,9 +1,24 @@
-#define MyAppName "Accessible Office Installer"
-#define MyAppPublisher "Accessible Office Installer"
-#define MyAppURL "https://github.com/bouhenni1982/Accessible-Office-Installer"
-#define MyAppExeName "accessible_office_installer.exe"
-#define MyAppVersion "1.0.0"
-#define MyBuildDir "..\build\windows\x64\runner\Release"
+#ifndef MyAppName
+  #define MyAppName "Accessible Office Installer"
+#endif
+#ifndef MyAppPublisher
+  #define MyAppPublisher "Accessible Office Installer"
+#endif
+#ifndef MyAppURL
+  #define MyAppURL "https://github.com/bouhenni1982/Accessible-Office-Installer"
+#endif
+#ifndef MyAppExeName
+  #define MyAppExeName "accessible_office_installer.exe"
+#endif
+#ifndef MyAppVersion
+  #define MyAppVersion "1.0.0"
+#endif
+#ifndef MyBuildDir
+  #define MyBuildDir "..\build\windows\x64\runner\Release"
+#endif
+#ifndef MyOutputBaseFilename
+  #define MyOutputBaseFilename "AccessibleOfficeInstallerSetup-" + MyAppVersion
+#endif
 
 [Setup]
 AppId={{D5DBF3F8-6F1B-4A33-9C87-43D2B7A8C6BF}
@@ -19,7 +34,7 @@ DisableProgramGroupPage=yes
 LicenseFile=
 PrivilegesRequired=admin
 OutputDir=..\dist
-OutputBaseFilename=AccessibleOfficeInstallerSetup
+OutputBaseFilename={#MyOutputBaseFilename}
 SetupIconFile=
 Compression=lzma
 SolidCompression=yes
