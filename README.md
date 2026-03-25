@@ -1,16 +1,32 @@
 # accessible_office_installer
 
-A new Flutter project.
+Flutter desktop app for building and running Microsoft Office installation profiles.
 
-## Getting Started
+## Windows distribution
 
-This project is a starting point for a Flutter application.
+You can distribute the Windows app in two ways:
 
-A few resources to get you started if this is your first Flutter project:
+1. Send the full Flutter Windows output as a `.zip`
+2. Build a single installer with Inno Setup
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Build the Windows app
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```powershell
+flutter build windows --release
+```
+
+This creates the folder:
+
+```text
+build/windows/x64/runner/Release
+```
+
+### Create a Setup.exe with Inno Setup
+
+The project includes an Inno Setup script here:
+
+[installer/accessible_office_installer.iss](/d:/flutterProjects/Accessible-Office-Installer/installer/accessible_office_installer.iss)
+
+Instructions are here:
+
+[installer/README.md](/d:/flutterProjects/Accessible-Office-Installer/installer/README.md)
